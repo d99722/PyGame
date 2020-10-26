@@ -12,7 +12,7 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("My Game")
 
 # 배경 이미지 불러오기
-background = pygame.image.load("background.png")
+background = pygame.image.load("/Users/donggeun/Desktop/pro/PyGame/background.png")
 
 # 캐릭터 불러오기
 character = pygame.image.load("chracter.png")
