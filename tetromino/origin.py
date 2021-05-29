@@ -3,7 +3,7 @@
 # http://inventwithpython.com/pygame
 # Released under a "Simplified BSD" license
 
-import random, time, pygame, sys
+import random, time, pygame, sys, math
 from pygame.locals import *
 
 FPS = 25
@@ -23,6 +23,7 @@ TOPMARGIN = WINDOWHEIGHT - (BOARDHEIGHT * BOXSIZE) - 5
 #               R    G    B
 WHITE       = (255, 255, 255)
 GRAY        = (185, 185, 185)
+LIGHTGRAY   = (205, 205, 205)
 BLACK       = (  0,   0,   0)
 RED         = (155,   0,   0)
 LIGHTRED    = (175,  20,  20)
@@ -32,13 +33,20 @@ BLUE        = (  0,   0, 155)
 LIGHTBLUE   = ( 20,  20, 175)
 YELLOW      = (155, 155,   0)
 LIGHTYELLOW = (175, 175,  20)
+ORANGE      = (255,  94,   0)
+LIGHTORANGE = (255, 114,  20)
+NAVY        = (  5,   0, 153)
+LIGHTNAVY   = ( 25,  20, 173)
+PURPLE      = (217,  65, 197)
+LIGHTPURPLE = (237,  85, 217)
 
 BORDERCOLOR = BLUE
 BGCOLOR = BLACK
-TEXTCOLOR = WHITE
+TEXTCOLOR = YELLOW
 TEXTSHADOWCOLOR = GRAY
-COLORS      = (     BLUE,      GREEN,      RED,      YELLOW)
-LIGHTCOLORS = (LIGHTBLUE, LIGHTGREEN, LIGHTRED, LIGHTYELLOW)
+COLORS      = (     BLUE,      GREEN,      RED,      YELLOW,      ORANGE,      GRAY,      PURPLE)
+LIGHTCOLORS = (LIGHTBLUE, LIGHTGREEN, LIGHTRED, LIGHTYELLOW, LIGHTORANGE, LIGHTGRAY, LIGHTPURPLE)
+BLOCKCOLORS = (WHITE, GRAY, RED, GREEN, BLUE, YELLOW, LIGHTRED)
 assert len(COLORS) == len(LIGHTCOLORS) # each color must have light color
 
 TEMPLATEWIDTH = 5
@@ -154,6 +162,15 @@ PIECES = {'S': S_SHAPE_TEMPLATE,
           'O': O_SHAPE_TEMPLATE,
           'T': T_SHAPE_TEMPLATE}
 
+PIECES_COLOR = {
+    'S': 0,
+    'Z': 1,
+    'J': 2,
+    'L': 3,
+    'I': 4,
+    'O': 5,
+    'T': 6
+}
 
 def main():
     global FPSCLOCK, DISPLAYSURF, BASICFONT, BIGFONT
@@ -162,18 +179,21 @@ def main():
     DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
     BASICFONT = pygame.font.Font('freesansbold.ttf', 18)
     BIGFONT = pygame.font.Font('freesansbold.ttf', 100)
-    pygame.display.set_caption('Tetromino')
+    pygame.display.set_caption('2016015096')
 
-    showTextScreen('Tetromino')
+    showTextScreen('MY TETRIS')
+    random_int = random.randint(0,2);
     while True: # game loop
-        if random.randint(0, 1) == 0:
-            pygame.mixer.music.load('tetrisb.mid')
+        if random_int == 0:
+            pygame.mixer.music.load('Hover.mp3')
+        elif random_int == 1:
+            pygame.mixer.music.load('Our_Lives_Past.mp3')
         else:
-            pygame.mixer.music.load('tetrisc.mid')
+            pygame.mixer.music.load('Platform_9.mp3')
         pygame.mixer.music.play(-1, 0.0)
         runGame()
         pygame.mixer.music.stop()
-        showTextScreen('Game Over')
+        showTextScreen('Over :(')        
 
 
 def runGame():
@@ -186,11 +206,12 @@ def runGame():
     movingLeft = False
     movingRight = False
     score = 0
+    playtime = time.time()
     level, fallFreq = calculateLevelAndFallFreq(score)
 
     fallingPiece = getNewPiece()
     nextPiece = getNewPiece()
-
+    
     while True: # game loop
         if fallingPiece == None:
             # No falling piece in play, so start a new piece at the top
@@ -208,7 +229,7 @@ def runGame():
                     # Pausing the game
                     DISPLAYSURF.fill(BGCOLOR)
                     pygame.mixer.music.stop()
-                    showTextScreen('Paused') # pause until a key press
+                    showTextScreen('Get a rest!') # pause until a key press
                     pygame.mixer.music.play(-1, 0.0)
                     lastFallTime = time.time()
                     lastMoveDownTime = time.time()
@@ -290,6 +311,7 @@ def runGame():
         # drawing everything on the screen
         DISPLAYSURF.fill(BGCOLOR)
         drawBoard(board)
+        drawTime(time.time()-playtime)
         drawStatus(score, level)
         drawNextPiece(nextPiece)
         if fallingPiece != None:
@@ -335,7 +357,7 @@ def showTextScreen(text):
     DISPLAYSURF.blit(titleSurf, titleRect)
 
     # Draw the additional "Press a key to play." text.
-    pressKeySurf, pressKeyRect = makeTextObjs('Press a key to play.', BASICFONT, TEXTCOLOR)
+    pressKeySurf, pressKeyRect = makeTextObjs('Press any key to play! pause key is p', BASICFONT, TEXTCOLOR)
     pressKeyRect.center = (int(WINDOWWIDTH / 2), int(WINDOWHEIGHT / 2) + 100)
     DISPLAYSURF.blit(pressKeySurf, pressKeyRect)
 
@@ -367,7 +389,7 @@ def getNewPiece():
                 'rotation': random.randint(0, len(PIECES[shape]) - 1),
                 'x': int(BOARDWIDTH / 2) - int(TEMPLATEWIDTH / 2),
                 'y': -2, # start it above the board (i.e. less than 0)
-                'color': random.randint(0, len(COLORS)-1)}
+                'color': PIECES_COLOR[shape]}
     return newPiece
 
 
@@ -464,6 +486,14 @@ def drawBoard(board):
         for y in range(BOARDHEIGHT):
             drawBox(x, y, board[x][y])
 
+def drawTime(sec):
+    # draw time
+    time = math.floor(sec)
+    timeSurf = BASICFONT.render('Play Time: %d sec' % time, True, TEXTCOLOR)
+    timeRect = timeSurf.get_rect()
+    timeRect.topleft = (20, 20)
+    DISPLAYSURF.blit(timeSurf, timeRect)
+            
 
 def drawStatus(score, level):
     # draw the score text
@@ -477,7 +507,7 @@ def drawStatus(score, level):
     levelRect = levelSurf.get_rect()
     levelRect.topleft = (WINDOWWIDTH - 150, 50)
     DISPLAYSURF.blit(levelSurf, levelRect)
-
+    
 
 def drawPiece(piece, pixelx=None, pixely=None):
     shapeToDraw = PIECES[piece['shape']][piece['rotation']]
